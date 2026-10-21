@@ -138,8 +138,8 @@ dependencies:
     specifier: 3.0.2
     version: 3.0.2
   plist:
-    specifier: 3.1.0
-    version: 3.1.0
+    specifier: 5.0.0
+    version: 5.0.0
   proxy-chain:
     specifier: 2.3.0
     version: 2.3.0
@@ -1106,7 +1106,7 @@ packages:
     engines: {node: '>= 14'}
     dependencies:
       eslint: 8.51.0
-      jschardet: 3.0.0
+      jschardet: 4.0.0
       lodash: 4.17.21
       utf8: 3.0.0
     transitivePeerDependencies:
@@ -1796,8 +1796,8 @@ packages:
       '@types/yargs-parser': 21.0.0
     dev: true
 
-  /@types/yauzl@2.10.0:
-    resolution: {integrity: sha512-Cn6WYCm0tXv8p6k+A8PvbDG763EDpBoTzHdA+Q/MF6H3sapGjCm9NzoaJncJS9tUKSuCoDs9XHxYYsQDgxR6kw==}
+  /@types/yauzl@2.10.3:
+    resolution: {integrity: sha512-oJoftv0LSuaDZE3Le4DbKX+KS9G36NzOeSap90UIK0yMA/NhKJhqlSGtNDORNRaIbQfzjXDrQa0ytJ6mNRGz/Q==}
     requiresBuild: true
     dependencies:
       '@types/node': 20.5.6
@@ -1825,9 +1825,9 @@ packages:
       - supports-color
     dev: true
 
-  /@xmldom/xmldom@0.8.10:
-    resolution: {integrity: sha512-2WALfTl4xo2SkGCYRt6rDTFfk9R1czmBvUQy12gK2KuRKIpWEhcbbzy8EZXtz/jkRqHX8bFEc6FC1HjX4TUWYw==}
-    engines: {node: '>=10.0.0'}
+  /@xmldom/xmldom@0.9.12:
+    resolution: {integrity: sha512-5AXjrcMClTryPe9LgZrygpB1lj7s0S9E0+W+AHaVKAVyHanafK86iPSvG5xHVSp/jC+VH1UXu0TAEmY279xH7A==}
+    engines: {node: '>=14.6'}
     dev: false
 
   /abab@2.0.6:
@@ -3437,7 +3437,7 @@ packages:
       get-stream: 5.2.0
       yauzl: 2.10.0
     optionalDependencies:
-      '@types/yauzl': 2.10.0
+      '@types/yauzl': 2.10.3
     transitivePeerDependencies:
       - supports-color
     dev: false
@@ -5012,9 +5012,10 @@ packages:
   /jsbn@0.1.1:
     resolution: {integrity: sha512-UVU9dibq2JcFWxQPA6KCqj5O42VOmAY3zQUfEKxU0KpTGXwNoCjkX1e13eHNvw/xPynt6pU0rZ1htjWTNTSXsg==}
 
-  /jschardet@3.0.0:
-    resolution: {integrity: sha512-lJH6tJ77V8Nzd5QWRkFYCLc13a3vADkh3r/Fi8HupZGWk2OVVDfnZP8V/VgQgZ+lzW0kG2UGb5hFgt3V3ndotQ==}
-    engines: {node: '>=0.1.90'}
+  /jschardet@4.0.0:
+    resolution: {integrity: sha512-EsNiLV+xzeMBtkGL/HeWoUivNkGIr8JmaC5A5j7DBlKnhp4CcBTWKEOtNg6vlmf+mkn9yQ9Wals47u7+LoTr7w==}
+    engines: {node: '>=20'}
+    hasBin: true
     dev: true
 
   /jsdom@22.1.0:
@@ -6378,12 +6379,11 @@ packages:
       find-up: 4.1.0
     dev: true
 
-  /plist@3.1.0:
-    resolution: {integrity: sha512-uysumyrvkUX0rX/dEVqt8gC3sTBzd4zoWfLeS29nb53imdaXVvLINYXTI2GNqzaMuvacNx4uJQ8+b3zXR0pkgQ==}
-    engines: {node: '>=10.4.0'}
+  /plist@5.0.0:
+    resolution: {integrity: sha512-20N+g1DvMm/DFRbsvER7tT4wDryq0WunK7VMkDaiJcKNapAnUMkTsAnacFYf8n420F4Hf6/hefgmJRkMb1M0fg==}
+    engines: {node: '>=18'}
     dependencies:
-      '@xmldom/xmldom': 0.8.10
-      base64-js: 1.5.1
+      '@xmldom/xmldom': 0.9.12
       xmlbuilder: 15.1.1
     dev: false
 
