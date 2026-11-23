@@ -162,8 +162,8 @@ dependencies:
     specifier: 7.1.3
     version: 7.1.3
   re2js:
-    specifier: 0.4.0
-    version: 0.4.0
+    specifier: 2.10.0
+    version: 2.10.0
   require-all:
     specifier: 3.0.0
     version: 3.0.0
@@ -1106,7 +1106,7 @@ packages:
     engines: {node: '>= 14'}
     dependencies:
       eslint: 8.51.0
-      jschardet: 3.0.0
+      jschardet: 4.1.0
       lodash: 4.17.21
       utf8: 3.0.0
     transitivePeerDependencies:
@@ -1796,8 +1796,8 @@ packages:
       '@types/yargs-parser': 21.0.0
     dev: true
 
-  /@types/yauzl@2.10.0:
-    resolution: {integrity: sha512-Cn6WYCm0tXv8p6k+A8PvbDG763EDpBoTzHdA+Q/MF6H3sapGjCm9NzoaJncJS9tUKSuCoDs9XHxYYsQDgxR6kw==}
+  /@types/yauzl@2.10.3:
+    resolution: {integrity: sha512-oJoftv0LSuaDZE3Le4DbKX+KS9G36NzOeSap90UIK0yMA/NhKJhqlSGtNDORNRaIbQfzjXDrQa0ytJ6mNRGz/Q==}
     requiresBuild: true
     dependencies:
       '@types/node': 20.5.6
@@ -3437,7 +3437,7 @@ packages:
       get-stream: 5.2.0
       yauzl: 2.10.0
     optionalDependencies:
-      '@types/yauzl': 2.10.0
+      '@types/yauzl': 2.10.3
     transitivePeerDependencies:
       - supports-color
     dev: false
@@ -5012,9 +5012,10 @@ packages:
   /jsbn@0.1.1:
     resolution: {integrity: sha512-UVU9dibq2JcFWxQPA6KCqj5O42VOmAY3zQUfEKxU0KpTGXwNoCjkX1e13eHNvw/xPynt6pU0rZ1htjWTNTSXsg==}
 
-  /jschardet@3.0.0:
-    resolution: {integrity: sha512-lJH6tJ77V8Nzd5QWRkFYCLc13a3vADkh3r/Fi8HupZGWk2OVVDfnZP8V/VgQgZ+lzW0kG2UGb5hFgt3V3ndotQ==}
-    engines: {node: '>=0.1.90'}
+  /jschardet@4.1.0:
+    resolution: {integrity: sha512-ighRZ11mb6l4m+xSKoivuqNj44qkObODXsAnnkkfYcY4JfYRnEgAe/w1c3mbnJtTQmLtfebAUfXGsUGUJImexg==}
+    engines: {node: '>=20'}
+    hasBin: true
     dev: true
 
   /jsdom@22.1.0:
@@ -6712,8 +6713,9 @@ packages:
     engines: {node: '>=10'}
     dev: false
 
-  /re2js@0.4.0:
-    resolution: {integrity: sha512-W6t5XWgedRUsSw3lcJCjejDwybz7xaBfDDpySQEgSdO6AYWbrFFHHOsunE6rcmkiPhyLMonlJNVtbcy9/+GBbQ==}
+  /re2js@2.10.0:
+    resolution: {integrity: sha512-/P6FNnLbHjXJMRF1dPoZoVTyHvFcuVhbDpzml9DPMlbeErYlZ18GueAaG9GhYhAm/9AN7i7Y6crmDrLX0DeJ4Q==}
+    engines: {node: '>=20.0.0'}
     dev: false
 
   /react-is@18.2.0:
