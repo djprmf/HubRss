@@ -1,0 +1,102 @@
+import { config } from '@/config';
+import cache from '@/utils/cache';
+import ofetch from '@/utils/ofetch';
+
+import { API_URL } from './constant';
+import type { BaseResponse, DutiesPartyDetail, FreeCompanyPartyDetail, NoviceNetworkParty, PostDetail, Resently, UserDynamic, UserInfo, UserPost } from './types';
+
+async function requestAPI<T = any>(url: string) {
+    const response = await ofetch<BaseResponse<T>>(url, {
+        headers: {
+            Cookie: `ff14risingstones=${config.sdo.ff14risingstones}`,
+            'User-Agent': config.sdo.ua!,
+        },
+    });
+
+    if (response.code !== 10000) {
+        throw new Error(response.msg);
+    }
+    return response.data;
+}
+
+// 获取用户游戏近况
+export const getResently = async (uid: string) => await requestAPI<Resently[]>(`${API_URL}/home/userInfo/getResently?uuid=${uid}`);
+
+// 获取用户信息
+export const getUserInfo = async (uid: string) => await requestAPI<UserInfo>(`${API_URL}/home/userInfo/getUserInfo?uuid=${uid}`);
+
+// 获取用户帖子
+export const getUserPosts = async (uid: string, type: 1 | 2) =>
+    (
+        await requestAPI<{
+            rows: UserPost[];
+        }>(`${API_URL}/home/userInfo/getUserPosts?uuid=${uid}&type=${type}`)
+    ).rows;
+
+// 获取用户动态
+export const getUserDynamic = async (uid: string) =>
+    (
+        await requestAPI<{
+            rows: UserDynamic[];
+        }>(`${API_URL}/home/userInfo/getUserDynamic?uuid=${uid}`)
+    ).rows;
+
+// 获取帖子详情
+export async function getPostsDetail(postID: string) {
+    try {
+        return await cache.tryGet(`sdo/ff14risingstones/post-detail:${postID}`, async () => await requestAPI<PostDetail>(`${API_URL}/home/posts/postsDetail?id=${postID}`));
+    } catch {
+        return null;
+    }
+}
+
+// 获取导芽招募详情
+export async function getNoviceNetworkRecruitDetail(recruitID: number) {
+    try {
+        return await cache.tryGet(`sdo/ff14risingstones/novice-network-recruit-detail:${recruitID}`, async () => await requestAPI<NoviceNetworkParty>(`${API_URL}/home/recruit/getNeDetail?id=${recruitID}`));
+    } catch {
+        return null;
+    }
+}
+
+// 获取副本招募详情
+export async function getDutiesRecruitDetail(recruitID: number) {
+    try {
+        return await cache.tryGet(`sdo/ff14risingstones/duties-recruit-detail:${recruitID}`, async () => await requestAPI<DutiesPartyDetail>(`${API_URL}/home/recruit/getRecruitFbDetail?id=${recruitID}`));
+    } catch {
+        return null;
+    }
+}
+
+// 获取部队招募详情
+export async function getFreeCompanyRecruitDetail(recruitID: number) {
+    try {
+        return await cache.tryGet(`sdo/ff14risingstones/free-company-recruit-detail:${recruitID}`, async () => await requestAPI<FreeCompanyPartyDetail>(`${API_URL}/home/recruit/getRecruitGuildDetail?id=${recruitID}`));
+    } catch {
+        return null;
+    }
+}
+
+// 获取帖文列表
+export async function getPosts(params: { type: 1 | 2; is_top?: 0 | 1; is_refine?: 0 | 1; limit?: number | string; order?: string; hotType?: string; part_id?: string }) {
+    const searchParams = new URLSearchParams();
+    for (const [key, value] of Object.entries(params)) {
+        if (value !== undefined) {
+            searchParams.set(key, value.toString());
+        }
+    }
+
+    return (
+        await requestAPI<{
+            rows: UserPost[];
+        }>(`${API_URL}/home/posts/postsList?${searchParams.toString()}`)
+    ).rows;
+}
+
+// 获取用户关注动态
+export const getFollowDynamicList = async (limit: number | string) =>
+    (
+        await requestAPI<{
+            rows: UserDynamic[];
+        }>(`${API_URL}/home/dynamic/getFollowDynamicList?limit=${limit}`)
+    ).rows;

@@ -1,0 +1,184 @@
+import { load } from 'cheerio';
+
+import NotFoundError from '@/errors/types/not-found';
+import type { Data } from '@/types';
+import cache from '@/utils/cache';
+import ofetch from '@/utils/ofetch';
+import { parseDate } from '@/utils/time';
+
+import { formatDescription, getChannelWithId, getChannelWithUsername, getPlaylist, getPlaylistItems, getPlaylistWithShortsFilter, getThumbnail, getVideos, getVideoUrl, renderYoutube } from '../utils';
+import { getSrtAttachmentBatch } from './subtitles';
+
+export const getDataByUsername = async ({ username, embed, filterShorts, isJsonFeed }: { username: string; embed: boolean; filterShorts: boolean; isJsonFeed: boolean }): Promise<Data> => {
+    let userHandleData;
+    if (username.startsWith('@')) {
+        userHandleData = await cache.tryGet(`youtube:handle:${username}`, async () => {
+            const link = `https://www.youtube.com/${username}`;
+            const response = await ofetch(link);
+            const $ = load(response);
+            const ytInitialData = JSON.parse(
+                $('script')
+                    .text()
+                    .match(/ytInitialData = (\{.*?\});/)?.[1] || '{}'
+            );
+            const metadataRenderer = ytInitialData.metadata.channelMetadataRenderer;
+
+            const channelId = metadataRenderer.externalId;
+            const channelName = metadataRenderer.title;
+            const image = metadataRenderer.avatar?.thumbnails?.[0]?.url;
+            const description = metadataRenderer.description;
+            const playlistId = (await getChannelWithId(channelId, 'contentDetails', cache)).data.items[0].contentDetails.relatedPlaylists.uploads;
+
+            return {
+                channelName,
+                image,
+                description,
+                playlistId,
+            };
+        });
+    }
+
+    // Get the appropriate playlist ID based on filterShorts setting
+    const playlistId = await (async () => {
+        if (userHandleData?.playlistId) {
+            const origPlaylistId = userHandleData.playlistId;
+
+            return getPlaylistWithShortsFilter(origPlaylistId, filterShorts);
+        }
+        const channelData = await getChannelWithUsername(username, 'contentDetails', cache);
+        const items = channelData.data.items;
+
+        if (!items) {
+            throw new NotFoundError(`The channel https://www.youtube.com/user/${username} does not exist.`);
+        }
+
+        const channelId = items[0].id;
+
+        return filterShorts ? getPlaylistWithShortsFilter(channelId, filterShorts) : items[0].contentDetails.relatedPlaylists.uploads;
+    })();
+
+    const playlistItems = await getPlaylistItems(playlistId, 'snippet', cache);
+    if (!playlistItems) {
+        throw new NotFoundError("This channel doesn't have any content.");
+    }
+    const videoIds = playlistItems.data.items.map((item) => item.snippet.resourceId.videoId);
+    const videoDetails = await getVideos(videoIds.join(','), 'contentDetails', cache);
+    const subtitlesMap = isJsonFeed ? await getSrtAttachmentBatch(videoIds) : {};
+
+    return {
+        title: `${userHandleData?.channelName || username} - YouTube`,
+        link: username.startsWith('@') ? `https://www.youtube.com/${username}` : `https://www.youtube.com/user/${username}`,
+        description: userHandleData?.description || `YouTube user ${username}`,
+        image: userHandleData?.image,
+        item: playlistItems.data.items
+            .filter((d) => d.snippet.title !== 'Private video' && d.snippet.title !== 'Deleted video')
+            .map((item) => {
+                const snippet = item.snippet;
+                const videoId = snippet.resourceId.videoId;
+                const img = getThumbnail(snippet.thumbnails);
+                const detail = videoDetails?.data.items.find((d) => d.id === videoId);
+                const srtAttachments = subtitlesMap ? subtitlesMap[videoId] || [] : [];
+
+                return {
+                    title: snippet.title,
+                    description: renderYoutube(embed, videoId, img, formatDescription(snippet.description)),
+                    pubDate: parseDate(snippet.publishedAt),
+                    link: `https://www.youtube.com/watch?v=${videoId}`,
+                    author: snippet.videoOwnerChannelTitle,
+                    image: img.url,
+                    attachments: [
+                        {
+                            url: getVideoUrl(videoId),
+                            mime_type: 'text/html',
+                            duration_in_seconds: detail?.contentDetails.duration ? Temporal.Duration.from(detail.contentDetails.duration).total('seconds') : undefined,
+                        },
+                        ...srtAttachments,
+                    ],
+                };
+            }),
+    };
+};
+
+export const getDataByChannelId = async ({ channelId, embed, filterShorts, isJsonFeed }: { channelId: string; embed: boolean; filterShorts: boolean; isJsonFeed: boolean }): Promise<Data> => {
+    // Get original uploads playlist ID if needed
+    const originalPlaylistId = filterShorts ? null : (await getChannelWithId(channelId, 'contentDetails', cache)).data.items[0].contentDetails.relatedPlaylists.uploads;
+
+    // Use the utility function to get the appropriate playlist ID based on filterShorts setting
+    const playlistId = filterShorts ? getPlaylistWithShortsFilter(channelId) : originalPlaylistId;
+
+    const data = (await getPlaylistItems(playlistId, 'snippet', cache)).data.items;
+    const videoIds = data.map((item) => item.snippet.resourceId.videoId);
+    const videoDetails = await getVideos(videoIds.join(','), 'contentDetails', cache);
+    const subtitlesMap = isJsonFeed ? await getSrtAttachmentBatch(videoIds) : {};
+
+    return {
+        title: `${data[0].snippet.channelTitle} - YouTube`,
+        link: `https://www.youtube.com/channel/${channelId}`,
+        description: `YouTube channel ${data[0].snippet.channelTitle}`,
+        item: data
+            .filter((d) => d.snippet.title !== 'Private video' && d.snippet.title !== 'Deleted video')
+            .map((item) => {
+                const snippet = item.snippet;
+                const videoId = snippet.resourceId.videoId;
+                const img = getThumbnail(snippet.thumbnails);
+                const detail = videoDetails?.data.items.find((d) => d.id === videoId);
+                const srtAttachments = subtitlesMap ? subtitlesMap[videoId] || [] : [];
+
+                return {
+                    title: snippet.title,
+                    description: renderYoutube(embed, videoId, img, formatDescription(snippet.description)),
+                    pubDate: parseDate(snippet.publishedAt),
+                    link: `https://www.youtube.com/watch?v=${videoId}`,
+                    author: snippet.videoOwnerChannelTitle,
+                    image: img.url,
+                    attachments: [
+                        {
+                            url: getVideoUrl(videoId),
+                            mime_type: 'text/html',
+                            duration_in_seconds: detail?.contentDetails.duration ? Temporal.Duration.from(detail.contentDetails.duration).total('seconds') : undefined,
+                        },
+                        ...srtAttachments,
+                    ],
+                };
+            }),
+    };
+};
+
+export const getDataByPlaylistId = async ({ playlistId, embed, isJsonFeed }: { playlistId: string; embed: boolean; isJsonFeed: boolean }): Promise<Data> => {
+    const playlistTitle = (await getPlaylist(playlistId, 'snippet', cache)).data.items[0].snippet.title;
+
+    const data = (await getPlaylistItems(playlistId, 'snippet', cache)).data.items.filter((d) => d.snippet.title !== 'Private video' && d.snippet.title !== 'Deleted video');
+    const videoIds = data.map((item) => item.snippet.resourceId.videoId);
+    const videoDetails = await getVideos(videoIds.join(','), 'contentDetails', cache);
+    const subtitlesMap = isJsonFeed ? await getSrtAttachmentBatch(videoIds) : {};
+
+    return {
+        title: `${playlistTitle} by ${data[0].snippet.channelTitle} - YouTube`,
+        link: `https://www.youtube.com/playlist?list=${playlistId}`,
+        description: `${playlistTitle} by ${data[0].snippet.channelTitle}`,
+        item: data.map((item) => {
+            const snippet = item.snippet;
+            const videoId = snippet.resourceId.videoId;
+            const img = getThumbnail(snippet.thumbnails);
+            const detail = videoDetails?.data.items.find((d) => d.id === videoId);
+            const srtAttachments = subtitlesMap ? subtitlesMap[videoId] || [] : [];
+
+            return {
+                title: snippet.title,
+                description: renderYoutube(embed, videoId, img, formatDescription(snippet.description)),
+                pubDate: parseDate(snippet.publishedAt),
+                link: `https://www.youtube.com/watch?v=${videoId}`,
+                author: snippet.videoOwnerChannelTitle,
+                image: img.url,
+                attachments: [
+                    {
+                        url: getVideoUrl(videoId),
+                        mime_type: 'text/html',
+                        duration_in_seconds: detail?.contentDetails.duration ? Temporal.Duration.from(detail.contentDetails.duration).total('seconds') : undefined,
+                    },
+                    ...srtAttachments,
+                ],
+            };
+        }),
+    };
+};
